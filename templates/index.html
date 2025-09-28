@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Notifications with HTMX Long-Polling</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 2rem;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+        
+        .notification {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 5px;
+            border-left: 4px solid #ccc;
+            background: #f9f9f9;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .notification.info { border-left-color: #3498db; }
+        .notification.success { border-left-color: #2ecc71; }
+        .notification.warning { border-left-color: #f39c12; }
+        .notification.error { border-left-color: #e74c3c; }
+        
+        .notification-meta {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        .status-panel {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+        }
+        
+        .polling-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #2ecc71;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 2rem;
+            font-style: italic;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔄 Real-time Notifications</h1>
+        <p>FastAPI + HTMX Long-Polling Demo</p>
+        <div>
+            <span class="polling-indicator"></span>
+            <span>Live polling active</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="main-content">
+            <h2>Live Notifications Feed</h2>
+            <p>Notifications will appear here in real-time using HTMX long-polling:</p>
+            
+            <!-- This div will be updated with new notifications -->
+            <div id="notifications-container" 
+                 hx-get="/poll?last_check=0" 
+                 hx-trigger="load, every 1s from:body"
+                 hx-swap="beforeend"
+                 hx-target="#notifications-list">
+                
+                <div id="notifications-list">
+                    {% if notifications %}
+                        {% for notification in notifications %}
+                        <div class="notification {{ notification.type }}">
+                            <div>{{ notification.message }}</div>
+                            <div class="notification-meta">
+                                ID: {{ notification.id }} | 
+                                {{ notification.datetime }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            No notifications yet. They will appear automatically!
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <h3>System Status</h3>
+            <div id="status-panel" 
+                 hx-get="/status" 
+                 hx-trigger="load, every 5s"
+                 hx-swap="innerHTML">
+                Loading status...
+            </div>
+            
+            <h3>Manual Actions</h3>
+            <button class="btn" 
+                    hx-post="/add-notification"
+                    hx-swap="none">
+                🔔 Add Test Notification
+            </button>
+            
+            <div style="margin-top: 2rem;">
+                <h4>How it works:</h4>
+                <ul style="font-size: 0.9rem; line-height: 1.6;">
+                    <li><strong>Long-polling:</strong> Client keeps a connection open to the server</li>
+                    <li><strong>HTMX:</strong> Automatically handles the polling and DOM updates</li>
+                    <li><strong>FastAPI:</strong> Server waits up to 30 seconds for new data</li>
+                    <li><strong>No JavaScript:</strong> Pure HTMX declarative approach</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hidden element to store the last check timestamp -->
+    <div id="last-check" style="display: none;">{{ notifications[-1].timestamp if notifications else 0 }}</div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<div class="status-panel">
+    <div style="margin-bottom: 0.5rem;">
+        <strong>📊 Total Notifications:</strong> {{ total_notifications }}
+    </div>
+    
+    {% if last_notification %}
+    <div style="margin-bottom: 0.5rem;">
+        <strong>🕒 Last Activity:</strong><br>
+        <small>{{ last_notification.message }}</small><br>
+        <small style="color: #666;">{{ last_notification.datetime }}</small>
+    </div>
+    {% endif %}
+    
+    <div style="margin-bottom: 0.5rem;">
+        <strong>⏰ Current Time:</strong><br>
+        <small>{{ current_time }}</small>
+    </div>
+    
+    <div style="color: #2ecc71; font-size: 0.9rem;">
+        ✅ System Online
+    </div>
+</div>

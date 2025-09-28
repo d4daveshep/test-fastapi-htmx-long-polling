@@ -1,0 +1,20 @@
+<!-- This template is used for long-polling responses -->
+{% if notifications %}
+    {% for notification in notifications %}
+    <div class="notification {{ notification.type }}">
+        <div>{{ notification.message }}</div>
+        <div class="notification-meta">
+            ID: {{ notification.id }} | 
+            {{ notification.datetime }}
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Update the polling trigger with new timestamp -->
+<div hx-get="/poll?last_check={{ last_check }}" 
+     hx-trigger="load delay:100ms"
+     hx-swap="beforeend"
+     hx-target="#notifications-list"
+     style="display: none;">
+</div>
