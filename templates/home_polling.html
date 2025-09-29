@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7" crossorigin="anonymous"></script>
+    <style>
+        .event-container {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            min-height: 100px;
+        }
+        .event-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .event-item:last-child {
+            border-bottom: none;
+        }
+        .user-section {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Testing Async events with Long Polling</h1>
+
+    <div class="user-section">
+        <h3>Alice's events (Pure HTMX Long Polling)</h3>
+        <div hx-get="/poll-html/alice?last_event_id=0"
+             hx-trigger="load"
+             hx-swap="outerHTML"
+             class="event-container">
+            <div class="event-item">Loading...</div>
+        </div>
+    </div>
+
+    <div class="user-section">
+        <h3>Bob's events (Pure HTMX Long Polling)</h3>
+        <div hx-get="/poll-html/bob?last_event_id=0"
+             hx-trigger="load"
+             hx-swap="outerHTML"
+             class="event-container">
+            <div class="event-item">Loading...</div>
+        </div>
+    </div>
+</body>
+</html>

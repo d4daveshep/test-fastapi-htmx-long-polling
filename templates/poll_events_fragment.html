@@ -1,0 +1,12 @@
+<div class="event-container"
+     hx-get="/poll-html/{{ name }}?last_event_id={{ last_event_id }}"
+     hx-trigger="load delay:100ms"
+     hx-swap="outerHTML">
+    {% if events %}
+        {% for event in events %}
+        <div class="event-item">{{ event }}</div>
+        {% endfor %}
+    {% else %}
+        <div class="event-item">No events yet</div>
+    {% endif %}
+</div>
