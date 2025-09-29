@@ -1,7 +1,7 @@
 import asyncio
 from collections import defaultdict
 import random
-from typing import Optional, Dict, Set
+# from typing import Optional, Dict, Set
 
 from fastapi import FastAPI, Request, Query
 from fastapi.responses import HTMLResponse
@@ -13,12 +13,13 @@ app = FastAPI(title="Test Long Polling Events")
 templates = Jinja2Templates(directory="templates")
 
 # Store latest events for each user
+# In this example we are storing all the events for each user
 latest_events: defaultdict[str, list[str]] = defaultdict(list)
-# Store event counters to track what each client has seen
-# user_event_counters: defaultdict[str, int] = defaultdict(int)
 
 # Event notification system for proper long polling
-user_event_notifiers: Dict[str, Set[asyncio.Event]] = defaultdict(set)
+# We use a dict with key=name and value=set of Events.  Events are discarded after there is new activity or the timeout is reached.
+# Each client browser windor or tab get's it's own event notifier for each name
+user_event_notifiers: dict[str, set[asyncio.Event]] = defaultdict(set)
 
 
 class EventGenerator:
@@ -53,22 +54,22 @@ event_generator: EventGenerator = EventGenerator()
 async def home(request: Request):
     # Start the event generator
     if not event_generator.started:
-        task: asyncio.Task = asyncio.create_task(event_generator.start(latest_events))
+        _: asyncio.Task = asyncio.create_task(event_generator.start(latest_events))
 
     return templates.TemplateResponse("home_polling.html", {"request": request})
 
 
 @app.get("/poll-html/{name}", response_class=HTMLResponse)
 async def poll_events_html(
-    request: Request, name: str, last_event_id: Optional[int] = Query(default=0)
-) -> str:
+    request: Request, name: str, last_event_id: int = Query(default=0)
+) -> HTMLResponse:
     """
     HTMX-compatible long polling endpoint that returns HTML with embedded polling attributes.
     Uses the same long polling logic but returns HTML that continues the polling loop.
     """
     user_events = latest_events[name]
 
-    # Check if we have new events immediately
+    # If we have new events then respond (i.e. return) immediately
     if len(user_events) > last_event_id:
         return templates.TemplateResponse(
             "poll_events_fragment.html",
@@ -78,7 +79,7 @@ async def poll_events_html(
                 "events": user_events,
                 "last_event_id": len(user_events),
             },
-        ).body.decode()
+        )
 
     # No new events, create an event notifier and wait
     event_notifier = asyncio.Event()
@@ -98,7 +99,7 @@ async def poll_events_html(
                     "events": user_events if user_events else None,
                     "last_event_id": last_event_id,
                 },
-            ).body.decode()
+            )
 
         # Event was triggered, return updated content
         user_events = latest_events[name]
@@ -110,7 +111,7 @@ async def poll_events_html(
                 "events": user_events,
                 "last_event_id": len(user_events),
             },
-        ).body.decode()
+        )
 
     finally:
         # Clean up: remove the event notifier from the set
@@ -121,4 +122,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8001)  # Different port to avoid conflicts
-
