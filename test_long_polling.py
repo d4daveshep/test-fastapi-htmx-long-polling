@@ -58,7 +58,9 @@ async def home(request: Request):
     if not event_generator.started:
         _: asyncio.Task = asyncio.create_task(event_generator.start(latest_events))
 
-    return templates.TemplateResponse("home_polling.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request, name="home_polling.html", context={}
+    )
 
 
 @app.get("/poll-html/{name}", response_class=HTMLResponse)

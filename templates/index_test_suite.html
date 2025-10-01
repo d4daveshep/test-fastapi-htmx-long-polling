@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .item {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        form {
+            margin: 20px 0;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 300px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Live Updates</h1>
+    
+    <!-- Items list with initial load -->
+    <div id="items" hx-get="/items" hx-trigger="load">
+        Loading...
+    </div>
+    
+    <!-- Form to add new items -->
+    <form hx-post="/items" hx-target="#items" hx-swap="beforeend">
+        <input type="text" name="name" placeholder="Item name" required>
+        <button type="submit">Add Item</button>
+    </form>
+    
+    <!-- HTMX long-polling for live updates -->
+    <div hx-get="/updates/poll" 
+         hx-trigger="load" 
+         hx-target="#items" 
+         hx-swap="beforeend">
+    </div>
+</body>
+</html>

@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 import asyncio
 from datetime import datetime
 
+
 # Event system for long-polling
 class EventBus:
     def __init__(self):
@@ -26,7 +27,9 @@ class EventBus:
         if queue in self.subscribers:
             self.subscribers.remove(queue)
 
+
 event_bus = EventBus()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,15 +38,19 @@ async def lifespan(app: FastAPI):
     # Shutdown
     event_bus.subscribers.clear()
 
+
 app = FastAPI(lifespan=lifespan)
 templates = Jinja2Templates(directory="templates")
 
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "title": "Welcome to Live Updates"
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="index_test_suite.html",
+        context={"title": "Welcome to Live Updates"},
+    )
+
 
 @app.get("/items", response_class=HTMLResponse)
 async def get_items(request: Request):
@@ -51,15 +58,14 @@ async def get_items(request: Request):
     is_htmx = request.headers.get("HX-Request") == "true"
 
     if is_htmx:
-        return templates.TemplateResponse("partials/items.html", {
-            "request": request,
-            "items": items
-        })
+        return templates.TemplateResponse(
+            "partials/items.html", {"request": request, "items": items}
+        )
 
-    return templates.TemplateResponse("items.html", {
-        "request": request,
-        "items": items
-    })
+    return templates.TemplateResponse(
+        "items.html", {"request": request, "items": items}
+    )
+
 
 @app.post("/items", response_class=HTMLResponse)
 async def create_item(request: Request):
@@ -67,16 +73,18 @@ async def create_item(request: Request):
     item_name = form.get("name")
 
     # Publish event to subscribers
-    await event_bus.publish({
-        "type": "item_created",
-        "data": item_name,
-        "timestamp": datetime.now().isoformat()
-    })
+    await event_bus.publish(
+        {
+            "type": "item_created",
+            "data": item_name,
+            "timestamp": datetime.now().isoformat(),
+        }
+    )
 
-    return templates.TemplateResponse("partials/item.html", {
-        "request": request,
-        "item": item_name
-    })
+    return templates.TemplateResponse(
+        "partials/item.html", {"request": request, "item": item_name}
+    )
+
 
 @app.get("/updates/poll", response_class=HTMLResponse)
 async def poll_updates(request: Request, timeout: float = 30.0):
@@ -86,16 +94,23 @@ async def poll_updates(request: Request, timeout: float = 30.0):
     try:
         event = await asyncio.wait_for(queue.get(), timeout=timeout)
         # Return HTML fragment with the new item
-        return templates.TemplateResponse("partials/item.html", {
-            "request": request,
-            "item": event["data"]
-        })
+        return templates.TemplateResponse(
+            "partials/item.html", {"request": request, "item": event["data"]}
+        )
     except asyncio.TimeoutError:
         # Return empty response and reconnect
         return ""
     finally:
         event_bus.unsubscribe(queue)
 
+
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
