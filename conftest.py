@@ -1,0 +1,34 @@
+# ============================================================================
+# conftest.py - Pytest Configuration and Fixtures
+# ============================================================================
+import pytest
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
+from fastapi.testclient import TestClient
+from main import app, event_bus
+
+@pytest.fixture
+def sync_client():
+    """Synchronous TestClient for simple tests"""
+    return TestClient(app)
+
+@pytest_asyncio.fixture
+async def async_client():
+    """Async client for testing async endpoints"""
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test"
+    ) as client:
+        yield client
+
+@pytest_asyncio.fixture(autouse=True)
+async def reset_event_bus():
+    """Reset event bus before each test"""
+    event_bus.subscribers.clear()
+    yield
+    event_bus.subscribers.clear()
+
+@pytest.fixture
+def context():
+    """Shared context for BDD steps"""
+    return {}
