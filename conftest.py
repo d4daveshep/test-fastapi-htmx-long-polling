@@ -24,7 +24,7 @@ async def async_client() -> AsyncGenerator[AsyncClient, None]:
         yield client
 
 
-@pytest_asyncio.fixture(autouse=True)
+@pytest_asyncio.fixture
 async def reset_event_bus() -> AsyncGenerator[None, None]:
     """Reset event bus before each test"""
     event_bus.subscribers.clear()
@@ -32,7 +32,18 @@ async def reset_event_bus() -> AsyncGenerator[None, None]:
     event_bus.subscribers.clear()
 
 
+@pytest.fixture(autouse=True)
+def reset_event_bus_sync(request):
+    """Reset event bus for sync/Playwright tests"""
+    # Skip for async tests that use the async fixture
+    if "reset_event_bus" in request.fixturenames:
+        return
+    event_bus.subscribers.clear()
+    yield
+    event_bus.subscribers.clear()
+
+
 @pytest.fixture
-def context() -> Dict[str, Any]:
+def bdd_context() -> Dict[str, Any]:
     """Shared context for BDD steps"""
     return {}

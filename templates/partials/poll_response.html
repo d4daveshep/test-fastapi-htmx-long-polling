@@ -1,0 +1,8 @@
+{% if item %}
+<div class="item">{{ item }}</div>
+{% endif %}
+<div hx-get="/updates/poll"
+     hx-trigger="load"
+     hx-target="#items"
+     hx-swap="beforeend">
+</div>

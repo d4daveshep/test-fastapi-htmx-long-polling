@@ -88,11 +88,9 @@ async def create_item(request: Request):
         }
     )
 
-    return templates.TemplateResponse(
-        request=request,
-        name="partials/item.html",
-        context={"item": item_name},
-    )
+    # Return empty response - let long-polling handle UI update
+    # This prevents duplicate items in the UI
+    return ""
 
 
 @app.get("/updates/poll", response_class=HTMLResponse)
@@ -102,15 +100,20 @@ async def poll_updates(request: Request, timeout: float = 30.0):
 
     try:
         event = await asyncio.wait_for(queue.get(), timeout=timeout)
-        # Return HTML fragment with the new item
+        # Return HTML fragment with the new item AND a new polling div
+        # This ensures continuous polling
         return templates.TemplateResponse(
             request=request,
-            name="partials/item.html",
+            name="partials/poll_response.html",
             context={"item": event["data"]},
         )
     except asyncio.TimeoutError:
-        # Return empty response and reconnect
-        return ""
+        # Return new polling div to continue polling
+        return templates.TemplateResponse(
+            request=request,
+            name="partials/poll_response.html",
+            context={"item": None},
+        )
     finally:
         event_bus.unsubscribe(queue)
 
