@@ -29,14 +29,38 @@ async def test_full_flow_with_multiple_subscribers(async_client: AsyncClient):
     await asyncio.sleep(0.1)
 
     # Create an item
-    await async_client.post("/items", data={"name": "Broadcast Item"})
+    await async_client.post("/items", data={"name": "Broadcast Item One"})
 
     # Both clients should receive the update
     results = await asyncio.gather(task1, task2)
 
     for client_id, response in results:
         assert response.status_code == 200
-        assert "Broadcast Item" in response.text
+        assert "Broadcast Item One" in response.text
+        soup: BeautifulSoup = BeautifulSoup(response.text, "html.parser")
+        item: Tag | None = soup.find(class_="item")
+        assert item is not None
+
+    # Create new polling tasks for the second update
+    task3: asyncio.Task[tuple[str, Response]] = asyncio.create_task(
+        poll_updates("client1")
+    )
+    task4: asyncio.Task[tuple[str, Response]] = asyncio.create_task(
+        poll_updates("client2")
+    )
+
+    # Wait for connections to establish
+    await asyncio.sleep(0.1)
+
+    # Create another item
+    await async_client.post("/items", data={"name": "Broadcast Item Two"})
+
+    # Both clients should receive the update
+    results = await asyncio.gather(task3, task4)
+
+    for client_id, response in results:
+        assert response.status_code == 200
+        assert "Broadcast Item Two" in response.text
         soup: BeautifulSoup = BeautifulSoup(response.text, "html.parser")
         item: Tag | None = soup.find(class_="item")
         assert item is not None
@@ -79,4 +103,3 @@ def test_health_check(sync_client: TestClient):
     response: Response = sync_client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
-
