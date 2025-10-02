@@ -1,6 +1,7 @@
 # ============================================================================
 # conftest.py - Pytest Configuration and Fixtures
 # ============================================================================
+from typing import AsyncGenerator, Generator, Dict, Any
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
@@ -9,13 +10,13 @@ from main_test_suite import app, event_bus
 
 
 @pytest.fixture
-def sync_client():
+def sync_client() -> TestClient:
     """Synchronous TestClient for simple tests"""
     return TestClient(app)
 
 
 @pytest_asyncio.fixture
-async def async_client():
+async def async_client() -> AsyncGenerator[AsyncClient, None]:
     """Async client for testing async endpoints"""
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
@@ -24,7 +25,7 @@ async def async_client():
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def reset_event_bus():
+async def reset_event_bus() -> AsyncGenerator[None, None]:
     """Reset event bus before each test"""
     event_bus.subscribers.clear()
     yield
@@ -32,7 +33,6 @@ async def reset_event_bus():
 
 
 @pytest.fixture
-def context():
+def context() -> Dict[str, Any]:
     """Shared context for BDD steps"""
     return {}
-
