@@ -10,5 +10,6 @@ Feature: Live Updates
         And the notification should contain the item data
 
     Scenario: Long-polling timeout
-        When I connect to updates with a short timeout
+        Given I'm connected to the updates endpoint with a short timeout
+        When I wait for the timeout period
         Then I should receive a timeout response
