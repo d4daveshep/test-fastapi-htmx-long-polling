@@ -59,11 +59,15 @@ async def get_items(request: Request):
 
     if is_htmx:
         return templates.TemplateResponse(
-            "partials/items.html", {"request": request, "items": items}
+            request=request,
+            name="partials/items.html",
+            context={"items": items},
         )
 
     return templates.TemplateResponse(
-        "items.html", {"request": request, "items": items}
+        request=request,
+        name="items.html",
+        context={"items": items},
     )
 
 
@@ -82,7 +86,9 @@ async def create_item(request: Request):
     )
 
     return templates.TemplateResponse(
-        "partials/item.html", {"request": request, "item": item_name}
+        request=request,
+        name="partials/item.html",
+        context={"item": item_name},
     )
 
 
@@ -95,7 +101,9 @@ async def poll_updates(request: Request, timeout: float = 30.0):
         event = await asyncio.wait_for(queue.get(), timeout=timeout)
         # Return HTML fragment with the new item
         return templates.TemplateResponse(
-            "partials/item.html", {"request": request, "item": event["data"]}
+            request=request,
+            name="partials/item.html",
+            context={"item": event["data"]},
         )
     except asyncio.TimeoutError:
         # Return empty response and reconnect
@@ -113,4 +121,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
