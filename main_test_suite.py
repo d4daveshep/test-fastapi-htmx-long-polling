@@ -29,6 +29,7 @@ class EventBus:
 
 
 event_bus = EventBus()
+items_list = []
 
 
 @asynccontextmanager
@@ -54,20 +55,19 @@ async def home(request: Request):
 
 @app.get("/items", response_class=HTMLResponse)
 async def get_items(request: Request):
-    items = ["Item 1", "Item 2", "Item 3"]
     is_htmx = request.headers.get("HX-Request") == "true"
 
     if is_htmx:
         return templates.TemplateResponse(
             request=request,
             name="partials/items.html",
-            context={"items": items},
+            context={"items": items_list},
         )
 
     return templates.TemplateResponse(
         request=request,
         name="items.html",
-        context={"items": items},
+        context={"items": items_list},
     )
 
 
@@ -75,6 +75,9 @@ async def get_items(request: Request):
 async def create_item(request: Request):
     form = await request.form()
     item_name = form.get("name")
+
+    # Add item to the list
+    items_list.append(item_name)
 
     # Publish event to subscribers
     await event_bus.publish(
