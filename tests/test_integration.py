@@ -83,8 +83,10 @@ async def test_htmx_and_polling_integration(async_client: AsyncClient):
         "/items", data={"name": "HTMX Created Item"}, headers={"HX-Request": "true"}
     )
 
+    await asyncio.sleep(0.5)
     assert response.status_code == 200
-    assert "HTMX Created Item" in response.text
+    # POST returns empty response - UI updates happen via long-polling only
+    assert response.text == ""
 
     # Check polling received the update as HTML
     poll_response: Response = await poll_task
